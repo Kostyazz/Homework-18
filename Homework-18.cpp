@@ -2,28 +2,35 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <filesystem>
+#include "User.h"
+#include "Message.h"
 
 using namespace std;
-
-class User {
-    string _login;
-    string _pass;
-	string _name;
-public:
-	User(string login, string pass, string name) : _login(login), _pass(pass), _name(name) {};
-};
-class Message {
-    string _sender;
-    string _receiver;
-	string _text;
-public:
-	Message(string sender, string receiver, string text) : _sender(sender), _receiver(receiver), _text(text) {};
-};
+namespace fs = std::filesystem;
 
 int main()
 {
 	vector<User> users;
 	vector<Message> messages;
+	//if files don't exist, create them
+	ifstream fin;
+	ofstream fout;
+	fin.open("Users.txt");
+	if (!fin.is_open()) {
+		fout.open("Users.txt");
+		fout.close();
+	} else {
+		fin.close();
+	}
+	fin.open("Messages.txt");
+	if (!fin.is_open()) {
+		fout.open("Messages.txt");
+		fout.close();
+	}
+	else {
+		fin.close();
+	}
 	//fill users array with login credentials from "Users.txt"
 	//separator is ' '
 	try {
@@ -78,5 +85,36 @@ int main()
 		exit(1);
 	}
 
+	try {
+		ofstream loginFile;
+		loginFile.open("Users.txt");
+		if (!loginFile.is_open()) {
+			throw runtime_error("ERROR: Login file not found");
+		}
+		for (auto user : users) {
+			loginFile << user.getLogin() << " " << user.getPass() << " " << user.getName() << endl;
+		}
+	}
+	catch (runtime_error& ex) {
+		cerr << ex.what() << endl;
+		exit(1);
+	}
+	try {
+		ofstream messageFile;
+		messageFile.open("Messages.txt");
+		if (!messageFile.is_open()) {
+			throw runtime_error("ERROR: Login file not found");
+		}
+		for (auto message : messages) {
+			messageFile << message.getSender() << " " << message.getReceiver() << " " << message.getText() << endl;
+		}
+	}
+	catch (runtime_error& ex) {
+		cerr << ex.what() << endl;
+		exit(1);
+	}
 
+	//change files permissions
+	fs::permissions("Users.txt", fs::perms::owner_read | fs::perms::owner_write, fs::perm_options::replace);
+	fs::permissions("Messages.txt", fs::perms::owner_read | fs::perms::owner_write, fs::perm_options::replace);
 }
